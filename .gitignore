@@ -1,0 +1,39 @@
+# Environment variables (보안상 커밋 금지)
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+TESTWEB/
+venv/
+env/
+
+# Java & Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE
+.vscode/
+.idea/
+*.iml
+.settings/
+.classpath
+.project
+
+# Database backups
+*.backup
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>구매 내역</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 15px; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px;
+        }
+        th, td { 
+            padding: 10px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd;
+        }
+        th { background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/shop">🛒 쇼핑하기</a>
+        <a href="/seats">🎫 좌석 예약</a>
+        <a href="/dashboard">📊 대시보드</a>
+        <a href="/logout">로그아웃</a>
+    </div>
+
+    <p style="margin-bottom: 10px;">환영합니다, <strong>{{ username }}</strong>님!</p>
+
+    <h1>📦 내 구매 내역</h1>
+
+    {% if purchases %}
+    <table>
+        <thead>
+            <tr>
+                <th>구매일시</th>
+                <th>아이템</th>
+                <th>수량</th>
+                <th>가격</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+            <tr>
+                <td>{{ purchase.purchased_at }}</td>
+                <td>{{ purchase.item_name }}</td>
+                <td>{{ purchase.quantity }}개</td>
+                <td>{{ "{:,}".format(purchase.price * purchase.quantity) }}원</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>아직 구매 내역이 없습니다.</p>
+    {% endif %}
+
+    <br>
+    <a href="/shop">← 쇼핑 계속하기</a>
+</body>
+</html>

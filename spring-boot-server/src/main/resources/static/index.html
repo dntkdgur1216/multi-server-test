@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지/게시판 서버</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .nav-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .nav-bar a {
+            margin-right: 15px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-bar a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .posts-container, .notices-container {
+            display: none;
+        }
+        .posts-container.active, .notices-container.active {
+            display: block;
+        }
+        .post-card, .notice-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .post-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .post-meta {
+            color: #666;
+            font-size: 14px;
+        }
+        .post-content {
+            color: #555;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        .post-author {
+            color: #007bff;
+            font-weight: 500;
+        }
+        .post-date {
+            color: #999;
+            font-size: 13px;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+            background: white;
+            border-radius: 8px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .submit-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .submit-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗂️ 공지/게시판 서버</h1>
+        
+        <!-- 네비게이션 -->
+        <div class="nav-bar">
+            <a href="http://localhost:8000/login">🔑 로그인</a>
+            <a href="http://localhost:8000/seats">🎫 좌석 예약</a>
+            <a href="http://localhost:8000/shop">🛒 쇼핑하기</a>
+            <a href="http://localhost:8000/dashboard">📊 대시보드</a>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('posts')">📝 게시글</div>
+            <div class="tab" onclick="switchTab('notices')">📢 공지사항</div>
+        </div>
+
+        <!-- 게시글 섹션 -->
+        <div class="posts-container active">
+            <div class="form-container">
+                <h3 style="margin-bottom: 15px;">새 게시글 작성</h3>
+                <form id="postForm">
+                    <div class="form-group">
+                        <label>제목</label>
+                        <input type="text" id="postTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>내용</label>
+                        <textarea id="postContent" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">작성</button>
+                </form>
+            </div>
+            <div id="postsLoading" class="loading">게시글을 불러오는 중...</div>
+            <div id="postsError" class="error" style="display: none;"></div>
+            <div id="postsList"></div>
+        </div>
+
+        <!-- 공지사항 섹션 -->
+        <div class="notices-container">
+            <div class="form-container">
+                <h3 style="margin-bottom: 15px;">새 공지사항 작성</h3>
+                <form id="noticeForm">
+                    <div class="form-group">
+                        <label>제목</label>
+                        <input type="text" id="noticeTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>내용</label>
+                        <textarea id="noticeContent" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">작성</button>
+                </form>
+            </div>
+            <div id="noticesLoading" class="loading">공지사항을 불러오는 중...</div>
+            <div id="noticesError" class="error" style="display: none;"></div>
+            <div id="noticesList"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'posts';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.posts-container, .notices-container').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            if (tab === 'posts') {
+                document.querySelector('.posts-container').classList.add('active');
+            } else {
+                document.querySelector('.notices-container').classList.add('active');
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('ko-KR');
+        }
+
+        async function loadPosts() {
+            try {
+                const response = await fetch('/api/posts');
+                const posts = await response.json();
+                
+                document.getElementById('postsLoading').style.display = 'none';
+                const postsList = document.getElementById('postsList');
+                
+                if (posts.length === 0) {
+                    postsList.innerHTML = '<div class="empty-message">등록된 게시글이 없습니다.</div>';
+                    return;
+                }
+                
+                postsList.innerHTML = posts.map(post => `
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="post-title">${post.title}</div>
+                            <button class="delete-btn" onclick="deletePost(${post.id})">삭제</button>
+                        </div>
+                        <div class="post-content">${post.content}</div>
+                        <div class="post-footer">
+                            <div class="post-author">✍️ ${post.author}</div>
+                            <div class="post-date">📅 ${formatDate(post.createdAt)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('postsLoading').style.display = 'none';
+                document.getElementById('postsError').textContent = '게시글을 불러오는데 실패했습니다: ' + error.message;
+                document.getElementById('postsError').style.display = 'block';
+            }
+        }
+
+        async function loadNotices() {
+            try {
+                const response = await fetch('/api/notices');
+                const notices = await response.json();
+                
+                document.getElementById('noticesLoading').style.display = 'none';
+                const noticesList = document.getElementById('noticesList');
+                
+                if (notices.length === 0) {
+                    noticesList.innerHTML = '<div class="empty-message">등록된 공지사항이 없습니다.</div>';
+                    return;
+                }
+                
+                noticesList.innerHTML = notices.map(notice => `
+                    <div class="notice-card">
+                        <div class="post-header">
+                            <div class="post-title">📢 ${notice.title}</div>
+                            <button class="delete-btn" onclick="deleteNotice(${notice.id})">삭제</button>
+                        </div>
+                        <div class="post-content">${notice.content}</div>
+                        <div class="post-footer">
+                            <div class="post-author">✍️ ${notice.author}</div>
+                            <div class="post-date">📅 ${formatDate(notice.createdAt)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('noticesLoading').style.display = 'none';
+                document.getElementById('noticesError').textContent = '공지사항을 불러오는데 실패했습니다: ' + error.message;
+                document.getElementById('noticesError').style.display = 'block';
+            }
+        }
+
+        async function deletePost(id) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+            
+            try {
+                await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+                loadPosts();
+            } catch (error) {
+                alert('삭제 실패: ' + error.message);
+            }
+        }
+
+        async function deleteNotice(id) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+            
+            try {
+                await fetch(`/api/notices/${id}`, { method: 'DELETE' });
+                loadNotices();
+            } catch (error) {
+                alert('삭제 실패: ' + error.message);
+            }
+        }
+
+        // 게시글 작성 폼 제출
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            
+            try {
+                const response = await fetch('/api/posts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                    credentials: 'include', // 쿠키 자동 전송
+                    body: JSON.stringify({ title, content })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('postForm').reset();
+                    loadPosts();
+                    alert('게시글이 작성되었습니다!');
+                } else {
+                    alert('작성 실패');
+                }
+            } catch (error) {
+                alert('오류: ' + error.message);
+            }
+        });
+
+        // 공지사항 작성 폼 제출
+        document.getElementById('noticeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('noticeTitle').value;
+            const content = document.getElementById('noticeContent').value;
+            
+            try {
+                const response = await fetch('/api/notices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                    credentials: 'include', // 쿠키 자동 전송
+                    body: JSON.stringify({ title, content })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('noticeForm').reset();
+                    loadNotices();
+                    alert('공지사항이 작성되었습니다!');
+                } else {
+                    alert('작성 실패');
+                }
+            } catch (error) {
+                alert('오류: ' + error.message);
+            }
+        });
+
+        // 페이지 로드 시 데이터 불러오기
+        loadPosts();
+        loadNotices();
+    </script>
+</body>
+</html>

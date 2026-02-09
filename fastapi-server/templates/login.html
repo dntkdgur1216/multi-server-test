@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인</title>
+    <style>
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>로그인</h1>
+    <div id="message"></div>
+    <form id="loginForm">
+        <div>
+            <label for="username">아이디:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="password">비밀번호:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" id="submitBtn">로그인</button>
+    </form>
+    <br>
+    <a href="/">계정이 없으신가요? 회원가입</a>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submitBtn');
+            
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = '/welcome';
+                    }, 1000);
+                } else {
+                    showMessage(data.detail || data.message, 'error');
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                showMessage('서버 오류가 발생했습니다', 'error');
+                submitBtn.disabled = false;
+            }
+        });
+        
+        function showMessage(msg, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = msg;
+            msgDiv.className = `message ${type}`;
+            setTimeout(() => { msgDiv.textContent = ''; msgDiv.className = ''; }, 3000);
+        }
+    </script>
+</body>
+</html>

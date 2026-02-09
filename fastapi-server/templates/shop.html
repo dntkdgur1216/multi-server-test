@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>아이템 쇼핑</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 15px; }
+        .item { 
+            border: 1px solid #ccc; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px;
+        }
+        .item h3 { margin: 0 0 10px 0; }
+        .stock { color: #666; }
+        .stock.low { color: red; font-weight: bold; }
+        .buy-form { display: inline-block; }
+        button { 
+            padding: 8px 15px; 
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        .btn-unsafe { background: #ff6b6b; color: white; border: none; }
+        .btn-safe { background: #51cf66; color: white; border: none; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/seats">🎫 좌석 예약</a>
+        <a href="/purchases">구매내역</a>
+        <a href="/dashboard">📊 대시보드</a>
+        <a href="http://localhost:8082" target="_blank">📝 게시판</a>
+        <a href="/logout">로그아웃</a>
+    </div>
+
+    <p style="margin-bottom: 10px;">환영합니다, <strong>{{ username }}</strong>님!</p>
+
+    <h1>🛒 아이템 상점 (REST API 방식)</h1>
+
+    <div id="message-container"></div>
+
+    <p><strong>동시성 테스트:</strong></p>
+    <ul>
+        <li><span style="color: #ff6b6b;">빨간 버튼</span>: 동시성 문제 있는 구매 (Race Condition 발생 가능)</li>
+        <li><span style="color: #51cf66;">초록 버튼</span>: 락을 사용한 안전한 구매</li>
+    </ul>
+
+    <hr>
+
+    <div id="items-container">
+        {% for item in items %}
+        <div class="item" data-item-id="{{ item.id }}">
+            <h3>{{ item.name }}</h3>
+            <p>가격: {{ "{:,}".format(item.price) }}원</p>
+            <p class="stock {% if item.stock < 5 %}low{% endif %}">
+                재고: <span class="stock-count">{{ item.stock }}</span>개
+            </p>
+
+            {% if username %}
+                {% if item.stock > 0 %}
+                    <button class="btn-unsafe" onclick="buyItem({{ item.id }}, false)">
+                        위험한 구매 (동시성 ❌)
+                    </button>
+                    <button class="btn-safe" onclick="buyItem({{ item.id }}, true)">
+                        안전한 구매 (동시성 ✅)
+                    </button>
+                {% else %}
+                    <p style="color: red;">품절</p>
+                {% endif %}
+            {% else %}
+                <p><a href="/login">로그인</a>하고 구매하세요</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        const username = "{{ username }}";
+
+        async function buyItem(itemId, useSafe) {
+            if (!username) {
+                showMessage('로그인이 필요합니다', 'error');
+                return;
+            }
+
+            // 버튼 비활성화
+            const buttons = document.querySelectorAll(`[data-item-id="${itemId}"] button`);
+            buttons.forEach(btn => btn.disabled = true);
+
+            try {
+                const response = await fetch(`/api/items/${itemId}/purchase`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        use_safe: useSafe
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                    // 재고 업데이트
+                    updateStock(itemId, result.remaining_stock);
+                } else {
+                    showMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('오류가 발생했습니다: ' + error.message, 'error');
+            } finally {
+                // 버튼 재활성화
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            
+            // 3초 후 자동 삭제
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3000);
+        }
+
+        function updateStock(itemId, newStock) {
+            const itemDiv = document.querySelector(`[data-item-id="${itemId}"]`);
+            const stockSpan = itemDiv.querySelector('.stock-count');
+            stockSpan.textContent = newStock;
+
+            // 재고가 0이면 품절 표시
+            if (newStock === 0) {
+                const buttons = itemDiv.querySelectorAll('button');
+                buttons.forEach(btn => btn.remove());
+                const stockP = itemDiv.querySelector('.stock');
+                stockP.insertAdjacentHTML('afterend', '<p style="color: red;">품절</p>');
+            }
+
+            // 재고가 5 미만이면 low 클래스 추가
+            const stockP = itemDiv.querySelector('.stock');
+            if (newStock < 5) {
+                stockP.classList.add('low');
+            }
+        }
+    </script>
+</body>
+</html>
