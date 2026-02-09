@@ -1,8 +1,8 @@
 # EC2 Multi-Server Communication Project
 
 AWS EC2 인스턴스 간 통신을 테스트하기 위한 프로젝트입니다.
-
-## 🏗️ 아키텍처
+(VSCODE 코파일럿 성능 테스트용입니다)
+## 아키텍처
 
 ```
 EC2 Instance #1 (FastAPI)  ←→  EC2 Instance #2 (Spring Boot)
