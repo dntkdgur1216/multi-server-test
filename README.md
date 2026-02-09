@@ -1,4 +1,4 @@
-# EC2 Multi-Server Communication Project
+# (EC2) Multi-Server Communication Project
 
 AWS EC2 인스턴스 간 통신을 테스트하기 전, 로컬에서 잘 돌아가는 프로젝트를 백업해 둔 것입니다.
 (VSCODE 코파일럿 성능 테스트용입니다)
