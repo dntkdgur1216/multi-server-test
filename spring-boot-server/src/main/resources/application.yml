@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: ${SERVER_PORT:8082}
 
 spring:
   http:
@@ -8,9 +8,9 @@ spring:
       enabled: true
       force: true
   datasource:
-    url: jdbc:mysql://localhost:3306/notice_board?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true
-    username: root
-    password: woo960525!
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:notice_board}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:woo960525!}
   jpa:
     hibernate:
       ddl-auto: update
@@ -25,3 +25,7 @@ spring:
         hbm2ddl:
           charset_name: utf8mb4
     show-sql: true
+
+# FastAPI 서버 URL
+fastapi:
+  url: ${FASTAPI_URL:http://localhost:8000}

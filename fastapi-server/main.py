@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from config import HOST, PORT, RELOAD, STATIC_DIR
+from config import HOST, PORT, RELOAD, STATIC_DIR, SPRING_BOOT_URL
 from database import init_db
 from routes.auth import router as auth_router
 from routes.shop import router as shop_router
@@ -17,7 +17,7 @@ app = FastAPI(title="간단한 로그인 시스템")
 # CORS 설정 (Spring Boot와 통신)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8082"],
+    allow_origins=[SPRING_BOOT_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

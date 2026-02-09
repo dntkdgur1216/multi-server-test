@@ -2,6 +2,7 @@ package com.example.noticeboard.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -12,7 +13,9 @@ import java.net.http.HttpResponse;
 @Service
 public class AuthService {
     
-    private static final String FASTAPI_URL = "http://localhost:8000/api/verify-session";
+    @Value("${fastapi.url}")
+    private String fastapiBaseUrl;
+    
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     
@@ -32,8 +35,9 @@ public class AuthService {
         }
         
         try {
+            String verifyUrl = fastapiBaseUrl + "/api/verify-session";
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(FASTAPI_URL))
+                    .uri(URI.create(verifyUrl))
                     .header("Cookie", cookie)
                     .GET()
                     .build();
